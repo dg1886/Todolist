@@ -37,7 +37,9 @@ export const ADD_TASK = 'ADD-TASK';
 export const CHANGE_TASK_STATUS = 'CHANGE-TASK-STATUS';
 export const CHANGE_TITLE_STATUS = 'CHANGE-TITLE-STATUS'
 
-export const tasksReducer = (state: TasksStateType, action: ActionsType) => {
+const initialState: TasksStateType = {}
+
+export const tasksReducer = (state: TasksStateType = initialState, action: ActionsType) => {
     switch (action.type) {
         case 'REMOVE_TASK': {
             const stateCopy = {...state}
@@ -85,7 +87,7 @@ export const tasksReducer = (state: TasksStateType, action: ActionsType) => {
         }
 
         default:
-            throw new Error("I don't understand this type")
+            return state
     }
 }
 
