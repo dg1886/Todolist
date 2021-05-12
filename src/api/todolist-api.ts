@@ -93,7 +93,7 @@ export const todolistsAPI = {
         return promise
     },
 
-    deleteTask(todolistId: string, taskId: string) {
+    deleteTask(taskId: string, todolistId: string) {
         const promise = instance.delete<ResponceType>(`todo-lists/${todolistId}/tasks/${taskId}`)
         return promise
     },
