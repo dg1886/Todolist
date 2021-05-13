@@ -72,12 +72,13 @@ export const TodolistsList = () => {
                                 key={tl.id}
                                 id={tl.id}
                                 title={tl.title}
+                                filter={tl.filter}
+                                entityStatus={tl.entityStatus}
                                 tasks={allTodolistTasks}
                                 removeTask={removeTask}
                                 changeFilter={changeFilter}
                                 addTask={addTask}
                                 changeTaskStatus={changeStatus}
-                                filter={tl.filter}
                                 removeTodolist={removeTodolist}
                                 changeTaskTitle={changeTaskTitle}
                                 changeTodolistTitle={changeTodolistTitle}

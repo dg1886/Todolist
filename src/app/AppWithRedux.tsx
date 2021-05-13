@@ -4,6 +4,10 @@ import {TaskType} from '../api/todolist-api'
 import {AppBar, Button, Container, Grid, IconButton, LinearProgress, Toolbar, Typography} from '@material-ui/core';
 import {Menu} from '@material-ui/icons';
 import {TodolistsList} from '../features/TodolistsList/TodolistList'
+import {useDispatch, useSelector} from "react-redux";
+import {AppRootStateType} from "../state/store";
+import {RequestStatusType} from "../state/app-reducer";
+import {ErrorSnackbar} from "../components/ErrorSnackbar/ErrorSnackbar";
 
 export type FilterValuesType = "all" | "active" | "completed";
 
@@ -20,7 +24,8 @@ export type TasksStateType = {
 
 
 function AppWithRedux() {
-
+    const dispatch = useDispatch()
+    const status = useSelector<AppRootStateType, RequestStatusType>(state => state.app.status)
 
 
     return (
@@ -35,11 +40,14 @@ function AppWithRedux() {
                     </Typography>
                     <Button color="inherit">Login</Button>
                 </Toolbar>
-                <LinearProgress/>
+
+                {/*<LinearProgress/>*/}
+                {status === 'loading' && <LinearProgress/>}
             </AppBar>
             <Container fixed>
                 <TodolistsList/>
             </Container>
+            <ErrorSnackbar/>
         </div>
     );
 }
