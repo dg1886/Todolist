@@ -9,6 +9,7 @@ import {
     setAppStatusAC,
     setAppStatusActionType
 } from "./app-reducer";
+import {AxiosError} from "axios";
 
 export type RemoveTodolistActionType = ReturnType<typeof removeTodolistAC>
 export type AddTodolistActionType = ReturnType<typeof addTodolistAC>
@@ -16,6 +17,7 @@ export type ChangeTodolistTitleActionType = ReturnType<typeof changeTodolistTitl
 export type ChangeTodolistFilterActionType = ReturnType<typeof changeTodolistFilterAC>
 export type setTodolistsActionType = ReturnType<typeof setTodolistAC>
 export type GetTodolistsActionType = ReturnType<typeof getTodolistAC>
+export type changeTodolistEntityStatusActionType = ReturnType<typeof changeTodolistEntityStatusAC>
 
 const initialState:Array<TodolistDomainType> = []
 export type TodolistValuesType = 'all' | 'active' | 'completed'
@@ -32,6 +34,7 @@ type TodolistsActionsType =
     | GetTodolistsActionType
     | setTodolistsActionType
     | setAppErrorActionType
+    | changeTodolistEntityStatusActionType
 
 
 export const todolistsReducer = (state: Array<TodolistDomainType> = initialState, action: TodolistsActionsType): Array<TodolistDomainType> => {
@@ -61,11 +64,17 @@ export const todolistsReducer = (state: Array<TodolistDomainType> = initialState
             return action.todolists.map(tl => ({...tl, filter: 'all', entityStatus: 'idle'}))
         }
 
+        case "CHANGE-TODOLIST-ENTITY-STATUS": {
+            return state.map(tl => tl.id === action.id ? {...tl, entityStatus: action.entityStatus} : tl)    /////////
+        }
+
         default:
             return state
     }
 }
 
+
+// actionCreators:
 export const removeTodolistAC = (todolistId: string) => {
     return { type: 'REMOVE-TODOLIST', id: todolistId} as const
 }
@@ -92,6 +101,11 @@ export const setTodolistAC = (todolists: Array<TodolistType>) => {
     return {type: 'SET-TODOLISTS', todolists} as const
 }
 
+export const changeTodolistEntityStatusAC = (id: string, entityStatus: RequestStatusType) => {
+    return {type: 'CHANGE-TODOLIST-ENTITY-STATUS', id, entityStatus} as const
+}
+
+//thunk:
 export const fetchTodolistsTC = () => (dispatch: Dispatch) => {
     dispatch(setAppStatusAC('loading'))
     todolistsAPI.getTodolists()
@@ -118,15 +132,25 @@ export const createTodolistTC = (todoTitle: string) => (dispatch: Dispatch<Todol
                 dispatch(setAppStatusAC('failed'))
             }
         })
-
+        .catch((err: AxiosError) => {
+            dispatch(setAppErrorAC(err.message))
+            dispatch(setAppStatusAC('failed'))
+        })
 }
 
 export const removeTodolistTC = (todolistId: string) => (dispatch: Dispatch<TodolistsActionsType
     | setAppStatusActionType>) => {
     dispatch(setAppStatusAC('loading'))
+    dispatch(changeTodolistEntityStatusAC(todolistId,'loading'))
     todolistsAPI.removeTodolist(todolistId)
-    dispatch(removeTodolistAC(todolistId))
-    dispatch(setAppStatusAC('succeeded'))
+        .then((res) => {
+            if(res.data.resultCode === 0) {
+                dispatch(removeTodolistAC(todolistId))
+                dispatch(setAppStatusAC('succeeded'))
+            }
+        })
+
+    // dispatch(changeTodolistEntityStatusAC(todolistId,'succeeded'))
 }
 
 export const changeTodolistTitleTC = (todolistId: string, todoTitle: string) => (dispatch: Dispatch<TodolistsActionsType

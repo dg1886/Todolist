@@ -63,7 +63,7 @@ export const Todolist = React.memo(function (props: PropsType) {
                 <Delete/>
             </IconButton>
         </h3>
-        <AddItemForm addItem={addTask}/>
+        <AddItemForm addItem={addTask} entityStatus={props.entityStatus}/>
         <div>
             {
                 tasksForTodolist.map(t => <Task
@@ -73,6 +73,7 @@ export const Todolist = React.memo(function (props: PropsType) {
                         removeTask={props.removeTask}
                         changeTaskTitle={props.changeTaskTitle}
                         changeTaskStatus={props.changeTaskStatus}
+                        entityStatus={props.entityStatus}
                     />
                 )
             }

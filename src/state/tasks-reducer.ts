@@ -5,11 +5,12 @@ import {
     RemoveTodolistActionType,
     setTodolistsActionType
 } from "./todolists-reducer";
-import {setAppErrorAC, setAppErrorActionType, setAppStatusActionType} from '../state/app-reducer'
+import {RequestStatusType, setAppErrorAC, setAppErrorActionType, setAppStatusActionType} from '../state/app-reducer'
 import {TaskType, todolistsAPI, UpdateTaskDomainModelType} from "../api/todolist-api";
 import {Dispatch} from "redux";
 import {AppRootStateType} from "./store";
 import {setAppStatusAC} from "./app-reducer";
+import {AxiosError} from "axios";
 
 
 export type removeTaskActionType = ReturnType<typeof removeTaskAC>
@@ -17,6 +18,7 @@ export type addTaskActionType = ReturnType<typeof addTaskAC>
 export type changeTaskStatusActionType = ReturnType<typeof changeTaskStatusAC>
 export type changeTitleStatusActionType = ReturnType<typeof changeTaskTitleAC>
 export type SetTasksActionType = ReturnType<typeof setTasksAC>
+export type changeTaskEntityStatusActionType = ReturnType<typeof changeTaskEntityStatusAC>
 
 type TasksActionsType = removeTaskActionType
     | addTaskActionType
@@ -28,6 +30,7 @@ type TasksActionsType = removeTaskActionType
     | setTodolistsActionType
     | SetTasksActionType
     | setAppErrorActionType
+    | changeTaskEntityStatusActionType
 
 
 const initialState: TasksStateType = {}
@@ -93,17 +96,24 @@ export const tasksReducer = (state: TasksStateType = initialState, action: Tasks
             return copyState
         }
         case 'SET_TASKS': {
-            return {...state, [action.todolistId]: action.tasks}
+            return {...state, [action.todolistId]: action.tasks.map(t=>({...t, entityStatus: 'idle'}))/*, entityStatus: 'idle'*/}
             // const stateCopy = {...state}
             // stateCopy[action.todolistId] = action.tasks
             // return stateCopy
+        }
+        case "CHANGE-TASK-ENTITY-STATUS": {
+            return {
+                ...state,
+                [action.todolistId]: state[action.todolistId]
+                    .map(t => t.id === action.taskId ? {...t, entityStatus: action.entityStatus} : t)
+            }
         }
 
         default:
             return state
     }
 }
-
+//actionCreators:
 export const removeTaskAC = (taskId: string, todolistId: string) => {
     return {type: 'REMOVE_TASK', taskId, todolistId} as const
 }
@@ -120,7 +130,13 @@ export const changeTaskTitleAC = (taskId: string, title: string, todolistId: str
 export const setTasksAC = (tasks: Array<TaskType>, todolistId: string) => {
     return {type: 'SET_TASKS', tasks, todolistId} as const
 }
+export const changeTaskEntityStatusAC = (taskId: string, todolistId: string, entityStatus: RequestStatusType) => {
+    debugger
+    return {type: 'CHANGE-TASK-ENTITY-STATUS', taskId, todolistId, entityStatus} as const
+}
 
+
+//thunk:
 export const fetchTasksTC = (todolistId: string) => (dispatch: Dispatch<TasksActionsType | setAppStatusActionType>) => {
     dispatch(setAppStatusAC('loading'))
     todolistsAPI.getTasks(todolistId)
@@ -131,41 +147,65 @@ export const fetchTasksTC = (todolistId: string) => (dispatch: Dispatch<TasksAct
         })
 }
 
-export const removeTaskTC = (todolistId: string, taskId: string) => (dispatch: Dispatch<TasksActionsType | setAppStatusActionType>) => {
+export const removeTaskTC = (taskId: string, todolistId: string) => (dispatch: Dispatch<TasksActionsType | setAppStatusActionType>) => {
     dispatch(setAppStatusAC('loading'))
+    dispatch(changeTaskEntityStatusAC(taskId, todolistId, 'loading'))
     todolistsAPI.deleteTask(todolistId, taskId)
         .then((res) => {
-            dispatch(removeTaskAC(todolistId, taskId))
+            dispatch(removeTaskAC(taskId, todolistId))
             dispatch(setAppStatusAC('succeeded'))
         })
 }
 
-export const addTaskTC = (title: string, todolistId: string) => (dispatch: Dispatch<TasksActionsType | setAppStatusActionType>) => {
-    dispatch(setAppStatusAC('loading'))
-    todolistsAPI.createTask(todolistId, title)
-        .then((res) => {
-            if (res.data.resultCode === 0) {
-                const task = res.data.data.item
-                dispatch(addTaskAC(task))
-                dispatch(setAppStatusAC('succeeded'))
-            } else {
-                if (res.data.messages.length) {
-                    dispatch(setAppErrorAC(res.data.messages[0] = 'The length of the title cannot be more than 100 letter'))
+export const addTaskTC = (title: string, todolistId: string) =>
+    (dispatch: Dispatch<TasksActionsType | setAppStatusActionType>) => {
+        dispatch(setAppStatusAC('loading'))
+        todolistsAPI.createTask(todolistId, title)
+            .then((res) => {
+                if (res.data.resultCode === 0) {
+                    const task = res.data.data.item
+                    dispatch(addTaskAC(task))
+                    dispatch(setAppStatusAC('succeeded'))
                 } else {
-                    dispatch(setAppErrorAC('error'))
+                    if (res.data.messages.length) {
+                        dispatch(setAppErrorAC(res.data.messages[0] = 'The length of the title cannot be more than 100 letter'))
+                    } else {
+                        dispatch(setAppErrorAC('Some error occurred'))
+                    }
+                    dispatch(setAppStatusAC('failed'))
                 }
+            })
+            .catch((err: AxiosError) => {
+                dispatch(setAppErrorAC(err.message))
                 dispatch(setAppStatusAC('failed'))
-            }
-        })
-}
+            })
+    }
 
 export const changeTaskTitleTC = (taskId: string, taskTitle: string, todolistId: string) =>
     (dispatch: Dispatch<TasksActionsType | setAppStatusActionType>) => {
         dispatch(setAppStatusAC('loading'))
         todolistsAPI.changeTaskTitle(taskId, taskTitle, todolistId)
             .then((res) => {
-                dispatch(changeTaskTitleAC(taskId, taskTitle, todolistId))
-                dispatch(setAppStatusAC('succeeded'))
+                    if (res.data.resultCode === 0) {
+                        dispatch(changeTaskTitleAC(taskId, taskTitle, todolistId))
+                        dispatch(setAppStatusAC('succeeded'))
+                    } else {
+                        if (res.data.messages.length) {
+                            dispatch(setAppErrorAC(res.data.messages[0] = 'The length of the title cannot be more than 100 letter'))
+                        } else {
+                            dispatch(setAppErrorAC('Some error occurred'))
+                        }
+                        dispatch(setAppStatusAC('failed'))
+                    }
+                }
+            )
+            .catch((err: AxiosError) => {
+                dispatch(setAppErrorAC(err.message))
+                dispatch(setAppStatusAC('failed'))
+                // if (taskTitle.length > 100) {
+                //     dispatch(setAppErrorAC(err.message))
+                //     dispatch(setAppStatusAC('failed'))
+                // }
             })
     }
 

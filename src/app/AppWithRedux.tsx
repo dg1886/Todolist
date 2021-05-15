@@ -8,6 +8,7 @@ import {useDispatch, useSelector} from "react-redux";
 import {AppRootStateType} from "../state/store";
 import {RequestStatusType} from "../state/app-reducer";
 import {ErrorSnackbar} from "../components/ErrorSnackbar/ErrorSnackbar";
+import {TodolistValuesType} from "../state/todolists-reducer";
 
 export type FilterValuesType = "all" | "active" | "completed";
 
@@ -24,7 +25,6 @@ export type TasksStateType = {
 
 
 function AppWithRedux() {
-    const dispatch = useDispatch()
     const status = useSelector<AppRootStateType, RequestStatusType>(state => state.app.status)
 
 
