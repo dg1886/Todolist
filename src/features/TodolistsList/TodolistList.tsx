@@ -13,14 +13,20 @@ import {Grid, Paper} from "@material-ui/core";
 import {AddItemForm} from "../../components/AddItemForm/AddItemForm";
 import {Todolist} from "./Todolist/Todolist";
 import {FilterValuesType, TasksStateType} from "../../app/AppWithRedux";
+import {Redirect} from "react-router-dom";
+import {setAppStatusAC} from "../../state/app-reducer";
 
 export const TodolistsList = () => {
 
     const dispatch = useDispatch()
     const todolists = useSelector<AppRootStateType, Array<TodolistDomainType>>(state => state.todolists)
     const tasks = useSelector<AppRootStateType, TasksStateType>(state => state.tasks)
+    const isLoggedIn = useSelector<AppRootStateType, boolean>(state => state.auth.isLoggedIn)
 
     useEffect( () => {
+        if (!isLoggedIn) {
+            return
+        }
         dispatch(fetchTodolistsTC())
     }, [])
 
@@ -56,6 +62,10 @@ export const TodolistsList = () => {
     const addTodolist = useCallback( (title: string) => {
         dispatch(createTodolistTC(title))
     }, [dispatch])
+
+    if(!isLoggedIn) {
+        return <Redirect to={'/login'}/>
+    }
 
     return <>
         <Grid container style={{padding: "20px"}}>

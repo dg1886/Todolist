@@ -64,6 +64,18 @@ export type UpdateTaskDomainModelType = {
 
 }
 
+export type authLoginType = {
+    email: string
+    password: string
+    rememberMe: boolean
+    captcha?: string
+}
+export type authMeResponceType = {
+    id: number
+    email: string
+    login: string
+}
+
 export const todolistsAPI = {
     getTodolists() {
         const promise = instance.get<TodolistsType[]>('todo-lists')
@@ -105,8 +117,22 @@ export const todolistsAPI = {
         return promise
     },
     changeTaskTitle(taskId: string, taskTitle: string, todolistId: string) {
-        const promise = instance.put<ResponceType<TaskType>>(`todo-lists/${todolistId}/tasks/${taskId}`, {title: taskTitle})
+        const promise = instance.put<ResponceType<{item: TaskType}>>(`todo-lists/${todolistId}/tasks/${taskId}`, {title: taskTitle})
         return promise
     },
+}
 
+export const authAPI = {
+    login(data: authLoginType) {
+        const promise = instance.post<ResponceType <{userId: number}>>(`auth/login`, data)
+        return promise
+    },
+    logout() {
+        const promise = instance.delete<ResponceType>(`/auth/login`)
+        return promise
+    },
+    authMe() {
+        const promise = instance.get<ResponceType<authMeResponceType>>(`auth/me`)
+        return promise
+    }
 }

@@ -1,9 +1,9 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import './App.css';
 import {TaskType} from '../api/todolist-api'
 import {
     AppBar,
-    Button,
+    Button, CircularProgress,
     Container,
     Grid,
     IconButton,
@@ -15,7 +15,7 @@ import {Menu} from '@material-ui/icons';
 import {TodolistsList} from '../features/TodolistsList/TodolistList'
 import {useDispatch, useSelector} from "react-redux";
 import {AppRootStateType} from "../state/store";
-import {RequestStatusType} from "../state/app-reducer";
+import {initializeAppTC, RequestStatusType} from "../state/app-reducer";
 import {ErrorSnackbar} from "../components/ErrorSnackbar/ErrorSnackbar";
 import {TodolistValuesType} from "../state/todolists-reducer";
 import {Login} from "../features/Login/Login";
@@ -36,8 +36,21 @@ export type TasksStateType = {
 
 
 function AppWithRedux() {
-    const status = useSelector<AppRootStateType, RequestStatusType>(state => state.app.status)
+    const dispatch = useDispatch()
 
+    useEffect( () => {
+        dispatch(initializeAppTC())
+    }, [])
+
+    const status = useSelector<AppRootStateType, RequestStatusType>(state => state.app.status)
+    const isInitialized = useSelector<AppRootStateType, boolean>(state => state.app.isInitialized)
+
+    if (!isInitialized) {
+        return <div
+            style={{position: 'fixed', top: '30%', textAlign: 'center', width: '100%'}}>
+            <CircularProgress/>
+        </div>
+    }
 
 
     return (

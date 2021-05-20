@@ -131,7 +131,6 @@ export const setTasksAC = (tasks: Array<TaskType>, todolistId: string) => {
     return {type: 'SET_TASKS', tasks, todolistId} as const
 }
 export const changeTaskEntityStatusAC = (taskId: string, todolistId: string, entityStatus: RequestStatusType) => {
-    debugger
     return {type: 'CHANGE-TASK-ENTITY-STATUS', taskId, todolistId, entityStatus} as const
 }
 
